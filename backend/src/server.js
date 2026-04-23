@@ -8,6 +8,8 @@ import { connectDB } from './config/db.js';
 
 import { functions, inngest } from "./config/inngest.js";
 
+import adminRoutes from "./routes/admin.route.js";
+
 const app = express();
 
 const __dirname = path.resolve();
@@ -20,6 +22,8 @@ app.use("/api/inngest", serve({ client: inngest, functions }));
 app.get('/api/health', (req, res) => {
     res.status(200).json({ msg: "working..." })
 })
+
+app.use('/api/admin', adminRoutes);
 
 
 if (ENV.NODE_ENV == "production") {
