@@ -19,6 +19,7 @@
     "inngest": "^4.2.4",
     "mongodb": "^7.2.0",
     "mongoose": "^9.5.0",
+    "multer": "^2.1.1",
     "shoppio": "file:.."
   }
 }
