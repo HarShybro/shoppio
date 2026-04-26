@@ -31,7 +31,7 @@ export async function createOrder(req, res) {
             totalPrice,
         });
 
-        // update product stock
+        // update the stock
         for (const item of orderItems) {
             await Product.findByIdAndUpdate(item.product._id, {
                 $inc: { stock: -item.quantity },
@@ -52,7 +52,6 @@ export async function getUserOrders(req, res) {
             .sort({ createdAt: -1 });
 
         // check if each order has been reviewed
-
         const orderIds = orders.map((order) => order._id);
         const reviews = await Review.find({ orderId: { $in: orderIds } });
         const reviewedOrderIds = new Set(reviews.map((review) => review.orderId.toString()));
