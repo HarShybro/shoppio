@@ -33,7 +33,7 @@ export const NAVIGATION = [
   },
 ];
 
-function Navbar() {
+function NavBar() {
   const location = useLocation();
 
   return (
@@ -60,4 +60,4 @@ function Navbar() {
   );
 }
 
-export default Navbar;
+export default NavBar;
