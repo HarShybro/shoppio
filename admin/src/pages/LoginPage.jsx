@@ -1,19 +1,10 @@
-import { Show, SignInButton, SignUpButton, UserButton } from "@clerk/react";
-import React from "react";
+import { SignIn } from "@clerk/react";
 
-export default function LoginPage() {
+function LoginPage() {
   return (
-    <div>
-      LoginPage
-      <header>
-        <Show when="signed-out">
-          <SignInButton />
-          <SignUpButton />
-        </Show>
-        <Show when="signed-in">
-          <UserButton />
-        </Show>
-      </header>
+    <div className="h-screen hero">
+      <SignIn />
     </div>
   );
 }
+export default LoginPage;
