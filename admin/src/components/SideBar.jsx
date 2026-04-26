@@ -3,7 +3,7 @@ import { ShoppingBagIcon } from "lucide-react";
 import { Link, useLocation } from "react-router";
 import { NAVIGATION } from "./Navbar";
 
-function Sidebar() {
+function SideBar() {
   const location = useLocation();
   const { user } = useUser();
 
@@ -71,4 +71,4 @@ function Sidebar() {
     </div>
   );
 }
-export default Sidebar;
+export default SideBar;

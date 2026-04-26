@@ -1,6 +1,6 @@
 import { Outlet } from "react-router";
-import Navbar from "../components/Navbar";
-import Sidebar from "../components/Sidebar";
+import NavBar from "../components/NavBar";
+import SideBar from "../components/SideBar";
 
 function DashboardLayout() {
   return (
@@ -13,14 +13,14 @@ function DashboardLayout() {
       />
 
       <div className="drawer-content">
-        <Navbar />
+        <NavBar />
 
         <main className="p-6">
           <Outlet />
         </main>
       </div>
 
-      <Sidebar />
+      <SideBar />
     </div>
   );
 }
