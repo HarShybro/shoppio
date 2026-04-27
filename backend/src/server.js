@@ -21,6 +21,18 @@ const app = express();
 
 const __dirname = path.resolve();
 
+app.use(
+    "/api/payment",
+    (req, res, next) => {
+        if (req.originalUrl === "/api/payment/webhook") {
+            express.raw({ type: "application/json" })(req, res, next);
+        } else {
+            express.json()(req, res, next); // parse json for non-webhook routes
+        }
+    },
+    paymentRoutes
+);
+
 app.use(express.json());
 app.use(clerkMiddleware());
 app.use(cors({ origin: ENV.CLIENT_URL, credentials: true }))
@@ -36,7 +48,7 @@ app.use('/api/order', orderRoutes);
 app.use('/api/review', reviewRoutes);
 app.use('/api/product', productRoutes);
 app.use('/api/cart', cartRoutes);
-app.use('/api/payment', paymentRoutes);
+// app.use('/api/payment', paymentRoutes);
 
 if (ENV.NODE_ENV == "production") {
     app.use(express.static(path.resolve(__dirname, '../admin/dist')))
