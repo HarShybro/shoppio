@@ -1,6 +1,7 @@
 import SafeScreen from "@/components/SafeScreen";
 import useCart from "@/hooks/useCart";
 import { useProduct } from "@/hooks/useProduct";
+import { useProductSummary } from "@/hooks/useProductSummary";
 import useWishlist from "@/hooks/useWishlist";
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
@@ -22,6 +23,7 @@ const ProductDetailScreen = () => {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { data: product, isError, isLoading } = useProduct(id);
   const { addToCart, isAddingToCart } = useCart();
+  const { data: summary, isLoading: isSummaryLoading } = useProductSummary(id);
 
   const {
     isInWishlist,
@@ -239,6 +241,34 @@ const ProductDetailScreen = () => {
             <Text className="text-text-secondary text-base leading-6">
               {product.description}
             </Text>
+          </View>
+
+          <View className="mb-8">
+            <View className="flex-row items-center mb-3">
+              <Ionicons name="sparkles" size={18} color="#00D9FF" />
+              <Text className="text-text-primary text-lg font-bold ml-2">
+                AI Summary
+              </Text>
+            </View>
+
+            <View className="bg-surface rounded-2xl p-4 border border-primary/20">
+              {isSummaryLoading ? (
+                <View className="flex-row items-center">
+                  <ActivityIndicator size="small" color="#00D9FF" />
+                  <Text className="text-text-secondary ml-3">
+                    Generating AI summary...
+                  </Text>
+                </View>
+              ) : summary ? (
+                <Text className="text-text-secondary text-base leading-6">
+                  {summary}
+                </Text>
+              ) : (
+                <Text className="text-text-secondary text-sm">
+                  No summary available.
+                </Text>
+              )}
+            </View>
           </View>
         </View>
       </ScrollView>
