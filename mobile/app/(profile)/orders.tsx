@@ -168,7 +168,7 @@ function OrdersScreen() {
                         {totalItems} items
                       </Text>
                       <Text className="text-primary font-bold text-xl">
-                        ${order.totalPrice.toFixed(2)}
+                        ₹{order.totalPrice.toFixed(2)}
                       </Text>
                     </View>
 
