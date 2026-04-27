@@ -1,7 +1,5 @@
 fastapi
 uvicorn
-sentence-transformers
-scikit-learn
 pymongo
 python-dotenv
-numpy
+google-genai
