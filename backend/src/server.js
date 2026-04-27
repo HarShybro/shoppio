@@ -15,6 +15,7 @@ import orderRoutes from "./routes/order.route.js";
 import reviewRoutes from "./routes/review.route.js";
 import productRoutes from "./routes/product.route.js";
 import cartRoutes from "./routes/cart.route.js";
+import paymentRoutes from "./routes/payment.route.js";
 
 const app = express();
 
@@ -35,6 +36,7 @@ app.use('/api/order', orderRoutes);
 app.use('/api/review', reviewRoutes);
 app.use('/api/product', productRoutes);
 app.use('/api/cart', cartRoutes);
+app.use('/api/payment', paymentRoutes);
 
 if (ENV.NODE_ENV == "production") {
     app.use(express.static(path.resolve(__dirname, '../admin/dist')))
