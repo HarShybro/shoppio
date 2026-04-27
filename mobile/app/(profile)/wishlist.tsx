@@ -13,7 +13,7 @@ import {
   View,
 } from "react-native";
 
-function WishlistScreen() {
+export default function WishlistScreen() {
   const {
     wishlist,
     isLoading,
@@ -173,7 +173,6 @@ function WishlistScreen() {
     </SafeScreen>
   );
 }
-export default WishlistScreen;
 
 function LoadingUI() {
   return (

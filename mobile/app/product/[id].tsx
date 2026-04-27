@@ -178,7 +178,7 @@ const ProductDetailScreen = () => {
           {/* Price */}
           <View className="flex-row items-center mb-6">
             <Text className="text-primary text-4xl font-bold">
-              ${product.price.toFixed(2)}
+              ₹{product.price.toFixed(2)}
             </Text>
           </View>
 
@@ -251,7 +251,7 @@ const ProductDetailScreen = () => {
               Total Price
             </Text>
             <Text className="text-primary text-2xl font-bold">
-              ${(product.price * quantity).toFixed(2)}
+              ₹{(product.price * quantity).toFixed(2)}
             </Text>
           </View>
           <TouchableOpacity

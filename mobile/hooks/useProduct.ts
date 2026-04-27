@@ -8,7 +8,7 @@ export const useProduct = (productId: string) => {
   const result = useQuery<Product>({
     queryKey: ["product", productId],
     queryFn: async () => {
-      const { data } = await api.get(`/products/${productId}`);
+      const { data } = await api.get(`/product/${productId}`);
       return data;
     },
     enabled: !!productId,
