@@ -1,23 +1,78 @@
 import { Stack } from "expo-router";
-import { QueryClientProvider, QueryClient } from "@tanstack/react-query";
+import "../global.css";
+import {
+  MutationCache,
+  QueryCache,
+  QueryClient,
+  QueryClientProvider,
+} from "@tanstack/react-query";
 import { ClerkProvider } from "@clerk/expo";
 import { tokenCache } from "@clerk/expo/token-cache";
-import "../global.css";
+import * as Sentry from "@sentry/react-native";
+import { StripeProvider } from "@stripe/stripe-react-native";
 
-const queryclient = new QueryClient();
+Sentry.init({
+  dsn: "https://e355b8546f2e9ec5aee23dafb541c4df@o4511286952919040.ingest.us.sentry.io/4511286954229760",
 
-const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY!;
+  // Adds more context data to events (IP address, cookies, user, etc.)
+  // For more information, visit: https://docs.sentry.io/platforms/react-native/data-management/data-collected/
+  sendDefaultPii: true,
 
-if (!publishableKey) {
-  throw new Error("Add your Clerk Publishable Key to the .env file");
-}
+  // Enable Logs
+  enableLogs: true,
 
-export default function RootLayout() {
+  // Configure Session Replay
+  replaysSessionSampleRate: 1.0,
+  replaysOnErrorSampleRate: 1,
+  integrations: [Sentry.mobileReplayIntegration()],
+
+  // uncomment the line below to enable Spotlight (https://spotlightjs.com)
+  // spotlight: __DEV__,
+});
+
+const queryClient = new QueryClient({
+  queryCache: new QueryCache({
+    onError: (error: any, query) => {
+      Sentry.captureException(error, {
+        tags: {
+          type: "react-query-error",
+          queryKey: query.queryKey[0]?.toString() || "unknon",
+        },
+        extra: {
+          errorMessage: error.message,
+          statusCode: error.response?.status,
+          queryKey: query.queryKey,
+        },
+      });
+    },
+  }),
+  mutationCache: new MutationCache({
+    onError: (error: any) => {
+      // global error handler for all mutations
+      Sentry.captureException(error, {
+        tags: { type: "react-query-mutation-error" },
+        extra: {
+          errorMessage: error.message,
+          statusCode: error.response?.status,
+        },
+      });
+    },
+  }),
+});
+
+export default Sentry.wrap(function RootLayout() {
   return (
-    <ClerkProvider publishableKey={publishableKey} tokenCache={tokenCache}>
-      <QueryClientProvider client={queryclient}>
-        <Stack screenOptions={{ headerShown: false }} />
+    <ClerkProvider
+      tokenCache={tokenCache}
+      publishableKey={process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY!}
+    >
+      <QueryClientProvider client={queryClient}>
+        <StripeProvider
+          publishableKey={process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY!}
+        >
+          <Stack screenOptions={{ headerShown: false }} />
+        </StripeProvider>
       </QueryClientProvider>
     </ClerkProvider>
   );
-}
+});
