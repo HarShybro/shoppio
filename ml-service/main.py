@@ -17,7 +17,8 @@ print("MONGO_URI loaded:", MONGO_URI is not None)  # prints True/False
 app = FastAPI()
 
 # load model once on startup
-model = SentenceTransformer("all-MiniLM-L6-v2")
+model = SentenceTransformer("paraphrase-MiniLM-L3-v2")
+model.max_seq_length = 128  # ← add this line
 
 
 class SearchRequest(BaseModel):
