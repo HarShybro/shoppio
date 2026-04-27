@@ -1,53 +1,74 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-from sentence_transformers import SentenceTransformer
-from sklearn.metrics.pairwise import cosine_similarity
 from pymongo import MongoClient
-import numpy as np
+from bson import ObjectId
 import os
 from dotenv import load_dotenv
+from google import genai
 
+# ─── LOAD ENV ───────────────────────────────────────────────
 
-# load env
 load_dotenv(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env"))
 
 MONGO_URI = os.getenv("MONGO_URI")
-print("MONGO_URI loaded:", MONGO_URI is not None)  # prints True/False
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+
+client = genai.Client(api_key=GEMINI_API_KEY)
+
+print("MONGO_URI loaded:", MONGO_URI is not None)
+print("GEMINI_API_KEY loaded:", GEMINI_API_KEY is not None)
 
 app = FastAPI()
 
-# load model once on startup
-model = SentenceTransformer("paraphrase-MiniLM-L3-v2")
-model.max_seq_length = 128  # ← add this line
+# ─── DB HELPERS ───────────────────────────────────────────────
 
 
-class SearchRequest(BaseModel):
-    query: str
-    limit: int = 10
-
-
-def get_products():
+def get_db():
     client = MongoClient(MONGO_URI)
-    print("MONGO_URI:", MONGO_URI)  # ← add this
-    db = client["shoppio_db"]  # change to your DB name if different
-    products = list(
-        db.products.find(
-            {},
-            {
-                "_id": 1,
-                "name": 1,
-                "description": 1,
-                "category": 1,
-                "price": 1,
-                "images": 1,
-                "averageRating": 1,
-                "totalReviews": 1,
-                "stock": 1,
-            },
+    return client["shoppio_db"]
+
+
+def get_product_by_id(product_id: str):
+    db = get_db()
+    return db.products.find_one({"_id": ObjectId(product_id)})
+
+
+def get_reviews_by_product(product_id: str):
+    db = get_db()
+    return list(db.reviews.find({"productId": ObjectId(product_id)}))
+
+
+# ─── GEMINI HELPER ───────────────────────────────────────────
+
+
+def call_gemini(prompt: str) -> str:
+    try:
+        response = client.models.generate_content(
+            model="models/gemini-2.5-flash", contents=prompt
         )
-    )
-    client.close()
-    return products
+
+        if not response.text:
+            raise Exception("Empty response")
+
+        return response.text.strip()
+
+    except Exception as e:
+        print("Gemini error:", str(e))
+
+        # 🔥 fallback (VERY IMPORTANT)
+        return (
+            "This product looks like a good option based on its features and ratings."
+        )
+
+
+# ─── REQUEST MODEL ──────────────────────────────────────────
+
+
+class SummaryRequest(BaseModel):
+    product_id: str
+
+
+# ─── ROUTES ──────────────────────────────────────────────────
 
 
 @app.get("/health")
@@ -55,37 +76,67 @@ def health():
     return {"status": "ok"}
 
 
-@app.post("/search")
-def semantic_search(request: SearchRequest):
+@app.get("/models")
+def get_models():
+    models = client.models.list()
+    return [m.name for m in models]
+
+
+# ✅ ONLY FEATURE: AI SUMMARY
+@app.post("/summary")
+def product_summary(request: SummaryRequest):
     try:
-        products = get_products()
-        if not products:
-            return {"results": []}
+        product = get_product_by_id(request.product_id)
 
-        # combine name + description + category for each product
-        product_texts = [
-            f"{p.get('name', '')} {p.get('description', '')} {p.get('category', '')}"
-            for p in products
-        ]
+        if not product:
+            raise HTTPException(status_code=404, detail="Product not found")
 
-        # encode query and all products
-        query_embedding = model.encode([request.query], convert_to_numpy=True)
-        product_embeddings = model.encode(product_texts, convert_to_numpy=True)
+        reviews = get_reviews_by_product(request.product_id)
 
-        # cosine similarity
-        similarities = cosine_similarity(query_embedding, product_embeddings)[0]
+        total = len(reviews)
 
-        # rank by similarity
-        ranked_indices = np.argsort(similarities)[::-1][: request.limit]
+        if total > 0:
+            avg = sum(r["rating"] for r in reviews) / total
+            five_star = sum(1 for r in reviews if r["rating"] == 5)
+            four_star = sum(1 for r in reviews if r["rating"] == 4)
+            three_star = sum(1 for r in reviews if r["rating"] == 3)
+            low_star = sum(1 for r in reviews if r["rating"] <= 2)
 
-        results = []
-        for idx in ranked_indices:
-            product = products[idx]
-            product["_id"] = str(product["_id"])
-            product["score"] = float(similarities[idx])
-            results.append(product)
+            rating_text = (
+                f"Average rating: {avg:.1f}/5 from {total} reviews. "
+                f"5★: {five_star}, 4★: {four_star}, "
+                f"3★: {three_star}, ≤2★: {low_star}."
+            )
+        else:
+            rating_text = "No reviews yet."
 
-        return {"results": results}
+        prompt = f"""
+You are a smart shopping assistant.
 
+Write a short 2-3 sentence summary focusing on:
+- What the product does
+- Whether it's worth the price
+- What the ratings suggest
+- Who should buy it
+
+Be honest and helpful. Do NOT hallucinate features.
+
+Product: {product.get('name')}
+Category: {product.get('category')}
+Price: ₹{product.get('price')}
+Description: {product.get('description')}
+Stock: {product.get('stock')}
+Ratings: {rating_text}
+"""
+
+        summary = call_gemini(prompt)
+
+        return {"summary": summary}
+
+    except HTTPException:
+        raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        return {
+            "summary": "⚠️ AI is busy right now. Try again later.",
+            "error": str(e),
+        }
