@@ -13,7 +13,7 @@ export const useReviews = () => {
 
   const createReview = useMutation({
     mutationFn: async (data: CreateReviewData) => {
-      const response = await api.post("/reviews", data);
+      const response = await api.post("/review", data);
       return response.data;
     },
     onSuccess: () => {
