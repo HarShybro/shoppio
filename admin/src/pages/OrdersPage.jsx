@@ -99,7 +99,7 @@ function OrdersPage() {
 
                         <td>
                           <span className="font-semibold">
-                            ${order.totalPrice.toFixed(2)}
+                            ₹{order.totalPrice.toFixed(2)}
                           </span>
                         </td>
 

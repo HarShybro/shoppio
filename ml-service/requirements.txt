@@ -3,3 +3,6 @@ uvicorn
 pymongo
 python-dotenv
 google-genai
+transformers
+torch
+scipy

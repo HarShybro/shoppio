@@ -28,6 +28,17 @@ const reviewSchema = new mongoose.Schema(
             default: "",
             maxlength: 500,
         },
+        sentiment: {
+            label: {
+                type: String,
+                enum: ["positive", "neutral", "negative", "none"],
+                default: "none",
+            },
+            score: {
+                type: Number,
+                default: 0,
+            },
+        },
     },
     { timestamps: true }
 );

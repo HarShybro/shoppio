@@ -2,7 +2,7 @@ import SafeScreen from "@/components/SafeScreen";
 import useCart from "@/hooks/useCart";
 import { useProduct } from "@/hooks/useProduct";
 import { useProductSummary } from "@/hooks/useProductSummary";
-import { useProductReviews } from "@/hooks/useReviews";
+import { useProductReviews, ProductReview } from "@/hooks/useReviews";
 import useWishlist from "@/hooks/useWishlist";
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
@@ -279,49 +279,79 @@ const ProductDetailScreen = () => {
             {isReviewsLoading ? (
               <ActivityIndicator size="small" color="#00D9FF" />
             ) : reviews && reviews.length > 0 ? (
-              reviews.map((review) => (
-                <View
-                  key={review._id}
-                  className="bg-surface rounded-2xl p-4 mb-3"
-                >
-                  {/* Header */}
-                  <View className="flex-row items-center justify-between mb-2">
-                    <Text className="text-text-primary font-semibold">
-                      {review.user.name}
-                    </Text>
-                    <Text className="text-text-secondary text-xs">
-                      {new Date(review.createdAt).toLocaleDateString("en-IN", {
-                        day: "numeric",
-                        month: "short",
-                        year: "numeric",
-                      })}
-                    </Text>
-                  </View>
+              <>
+                {/* sentiment bar above review cards */}
+                <SentimentBar reviews={reviews} />
 
-                  {/* Stars */}
-                  <View className="flex-row mb-2">
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <Ionicons
-                        key={star}
-                        name={star <= review.rating ? "star" : "star-outline"}
-                        size={14}
-                        color="#FFC107"
-                      />
-                    ))}
-                  </View>
+                {reviews.map((review) => (
+                  <View
+                    key={review._id}
+                    className="bg-surface rounded-2xl p-4 mb-3"
+                  >
+                    <View className="flex-row items-center justify-between mb-2">
+                      <Text className="text-text-primary font-semibold">
+                        {review.user.name}
+                      </Text>
+                      <Text className="text-text-secondary text-xs">
+                        {new Date(review.createdAt).toLocaleDateString(
+                          "en-IN",
+                          {
+                            day: "numeric",
+                            month: "short",
+                            year: "numeric",
+                          },
+                        )}
+                      </Text>
+                    </View>
 
-                  {/* Comment */}
-                  {review.comment ? (
-                    <Text className="text-text-secondary text-sm leading-5">
-                      {review.comment}
-                    </Text>
-                  ) : (
-                    <Text className="text-text-secondary text-xs italic">
-                      No comment left
-                    </Text>
-                  )}
-                </View>
-              ))
+                    <View className="flex-row items-center mb-2">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <Ionicons
+                          key={star}
+                          name={star <= review.rating ? "star" : "star-outline"}
+                          size={14}
+                          color="#FFC107"
+                        />
+                      ))}
+                      {/* sentiment badge next to stars */}
+                      {review.sentiment?.label &&
+                        review.sentiment.label !== "none" && (
+                          <View
+                            className={`ml-2 px-2 py-0.5 rounded-full ${
+                              review.sentiment.label === "positive"
+                                ? "bg-green-400/20"
+                                : review.sentiment.label === "negative"
+                                  ? "bg-red-400/20"
+                                  : "bg-yellow-400/20"
+                            }`}
+                          >
+                            <Text
+                              className={`text-xs font-semibold ${
+                                review.sentiment.label === "positive"
+                                  ? "text-green-400"
+                                  : review.sentiment.label === "negative"
+                                    ? "text-red-400"
+                                    : "text-yellow-400"
+                              }`}
+                            >
+                              {review.sentiment.label}
+                            </Text>
+                          </View>
+                        )}
+                    </View>
+
+                    {review.comment ? (
+                      <Text className="text-text-secondary text-sm leading-5">
+                        {review.comment}
+                      </Text>
+                    ) : (
+                      <Text className="text-text-secondary text-xs italic">
+                        No comment left
+                      </Text>
+                    )}
+                  </View>
+                ))}
+              </>
             ) : (
               <View className="bg-surface rounded-2xl p-4 items-center">
                 <Text className="text-text-secondary text-sm">
@@ -477,5 +507,89 @@ function LoadingUI() {
         <Text className="text-text-secondary mt-4">Loading product...</Text>
       </View>
     </SafeScreen>
+  );
+}
+function SentimentBar({ reviews }: { reviews: ProductReview[] }) {
+  const withSentiment = reviews.filter(
+    (r) => r.sentiment?.label && r.sentiment.label !== "none",
+  );
+
+  if (withSentiment.length === 0) return null;
+
+  const total = withSentiment.length;
+  const positive = Math.round(
+    (withSentiment.filter((r) => r.sentiment.label === "positive").length /
+      total) *
+      100,
+  );
+  const neutral = Math.round(
+    (withSentiment.filter((r) => r.sentiment.label === "neutral").length /
+      total) *
+      100,
+  );
+  const negative = Math.round(
+    (withSentiment.filter((r) => r.sentiment.label === "negative").length /
+      total) *
+      100,
+  );
+
+  return (
+    <View className="bg-surface rounded-2xl p-4 mb-4">
+      <Text className="text-text-primary font-bold mb-3">
+        Sentiment Analysis
+      </Text>
+
+      {/* Positive */}
+      <View className="mb-2">
+        <View className="flex-row justify-between mb-1">
+          <Text className="text-green-400 text-xs font-semibold">Positive</Text>
+          <Text className="text-green-400 text-xs font-semibold">
+            {positive}%
+          </Text>
+        </View>
+        <View className="bg-background rounded-full h-2">
+          <View
+            className="bg-green-400 h-2 rounded-full"
+            style={{ width: `${positive}%` }}
+          />
+        </View>
+      </View>
+
+      {/* Neutral */}
+      <View className="mb-2">
+        <View className="flex-row justify-between mb-1">
+          <Text className="text-yellow-400 text-xs font-semibold">Neutral</Text>
+          <Text className="text-yellow-400 text-xs font-semibold">
+            {neutral}%
+          </Text>
+        </View>
+        <View className="bg-background rounded-full h-2">
+          <View
+            className="bg-yellow-400 h-2 rounded-full"
+            style={{ width: `${neutral}%` }}
+          />
+        </View>
+      </View>
+
+      {/* Negative */}
+      <View>
+        <View className="flex-row justify-between mb-1">
+          <Text className="text-red-400 text-xs font-semibold">Negative</Text>
+          <Text className="text-red-400 text-xs font-semibold">
+            {negative}%
+          </Text>
+        </View>
+        <View className="bg-background rounded-full h-2">
+          <View
+            className="bg-red-400 h-2 rounded-full"
+            style={{ width: `${negative}%` }}
+          />
+        </View>
+      </View>
+
+      <Text className="text-text-secondary text-xs mt-3">
+        Based on {total} comment{total > 1 ? "s" : ""}
+      </Text>
+    </View>
   );
 }

@@ -17,6 +17,11 @@ export interface ProductReview {
   _id: string;
   rating: number;
   comment: string;
+  sentiment: {
+    // ← add
+    label: "positive" | "neutral" | "negative" | "none";
+    score: number;
+  };
   createdAt: string;
   user: ReviewUser;
 }
