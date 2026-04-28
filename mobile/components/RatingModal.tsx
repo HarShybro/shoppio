@@ -1,6 +1,7 @@
 import { Order } from "@/types";
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
+// import { useState } from "react";
 import {
   View,
   Text,
@@ -9,6 +10,7 @@ import {
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
+  TextInput,
 } from "react-native";
 
 interface RatingModalProps {
@@ -16,7 +18,9 @@ interface RatingModalProps {
   onClose: () => void;
   order: Order | null;
   productRatings: { [key: string]: number };
+  productComments: { [key: string]: string }; // ← add
   onRatingChange: (productId: string, rating: number) => void;
+  onCommentChange: (productId: string, comment: string) => void; // ← add
   onSubmit: () => void;
   isSubmitting: boolean;
 }
@@ -26,7 +30,9 @@ const RatingModal = ({
   onClose,
   order,
   productRatings,
+  productComments,
   onRatingChange,
+  onCommentChange,
   onSubmit,
   isSubmitting,
 }: RatingModalProps) => {
@@ -37,11 +43,10 @@ const RatingModal = ({
       transparent={true}
       onRequestClose={onClose}
     >
-      {/* backdrop layer */}
       <TouchableWithoutFeedback onPress={onClose}>
         <View className="flex-1 bg-black/70 items-center justify-center px-4">
           <TouchableWithoutFeedback>
-            <View className="bg-surface rounded-3xl p-6 w-full max-w-md max-h-[80%]">
+            <View className="bg-surface rounded-3xl p-6 w-full max-w-md max-h-[85%]">
               <View className="items-center mb-4">
                 <View className="bg-primary/20 rounded-full w-16 h-16 items-center justify-center mb-3">
                   <Ionicons name="star" size={32} color="#1DB954" />
@@ -50,14 +55,15 @@ const RatingModal = ({
                   Rate Your Products
                 </Text>
                 <Text className="text-text-secondary text-center text-sm">
-                  Rate each product from your order
+                  Rate and share your experience
                 </Text>
               </View>
 
-              <ScrollView className="mb-4">
+              <ScrollView className="mb-4" showsVerticalScrollIndicator={false}>
                 {order?.orderItems.map((item, index) => {
                   const productId = item.product._id;
                   const currentRating = productRatings[productId] || 0;
+                  const currentComment = productComments[productId] || "";
 
                   return (
                     <View
@@ -66,6 +72,7 @@ const RatingModal = ({
                         index < order.orderItems.length - 1 ? "mb-3" : ""
                       }`}
                     >
+                      {/* Product Info */}
                       <View className="flex-row items-center mb-3">
                         <Image
                           source={item.image}
@@ -84,7 +91,8 @@ const RatingModal = ({
                         </View>
                       </View>
 
-                      <View className="flex-row justify-center">
+                      {/* Stars */}
+                      <View className="flex-row justify-center mb-3">
                         {[1, 2, 3, 4, 5].map((star) => (
                           <TouchableOpacity
                             key={star}
@@ -102,6 +110,21 @@ const RatingModal = ({
                           </TouchableOpacity>
                         ))}
                       </View>
+
+                      {/* Comment Box */}
+                      <TextInput
+                        className="bg-surface text-text-primary rounded-xl px-4 py-3 text-sm"
+                        placeholder="Share your experience (optional)"
+                        placeholderTextColor="#666"
+                        value={currentComment}
+                        onChangeText={(text) =>
+                          onCommentChange(productId, text)
+                        }
+                        multiline
+                        maxLength={500}
+                        numberOfLines={3}
+                        textAlignVertical="top"
+                      />
                     </View>
                   );
                 })}
@@ -122,6 +145,7 @@ const RatingModal = ({
                     </Text>
                   )}
                 </TouchableOpacity>
+
                 <TouchableOpacity
                   className="bg-surface-lighter rounded-2xl py-4 items-center border border-background-lighter"
                   activeOpacity={0.7}

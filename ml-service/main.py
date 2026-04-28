@@ -24,8 +24,8 @@ app = FastAPI()
 
 
 def get_db():
-    client = MongoClient(MONGO_URI)
-    return client["shoppio_db"]
+    mongo_client = MongoClient(MONGO_URI)
+    return mongo_client["shoppio_db"]
 
 
 def get_product_by_id(product_id: str):
@@ -54,8 +54,6 @@ def call_gemini(prompt: str) -> str:
 
     except Exception as e:
         print("Gemini error:", str(e))
-
-        # 🔥 fallback (VERY IMPORTANT)
         return (
             "This product looks like a good option based on its features and ratings."
         )
@@ -92,7 +90,6 @@ def product_summary(request: SummaryRequest):
             raise HTTPException(status_code=404, detail="Product not found")
 
         reviews = get_reviews_by_product(request.product_id)
-
         total = len(reviews)
 
         if total > 0:
@@ -107,8 +104,22 @@ def product_summary(request: SummaryRequest):
                 f"5★: {five_star}, 4★: {four_star}, "
                 f"3★: {three_star}, ≤2★: {low_star}."
             )
+
+            # ─── collect user comments ───────────────────────
+            comments = [
+                r["comment"].strip() for r in reviews if r.get("comment", "").strip()
+            ]
+
+            if comments:
+                # cap at 10 comments so prompt doesn't get too long
+                comment_lines = "\n".join(f'- "{c}"' for c in comments[:10])
+                comment_text = f"\n\nUser comments:\n{comment_lines}"
+            else:
+                comment_text = "\n\nUser comments: None yet."
+
         else:
             rating_text = "No reviews yet."
+            comment_text = "\n\nUser comments: None yet."
 
         prompt = f"""
 You are a smart shopping assistant.
@@ -116,21 +127,21 @@ You are a smart shopping assistant.
 Write a short 2-3 sentence summary focusing on:
 - What the product does
 - Whether it's worth the price
-- What the ratings suggest
+- What the ratings and user comments suggest
 - Who should buy it
 
 Be honest and helpful. Do NOT hallucinate features.
+If user comments are available, use them to reflect real buyer experiences.
 
 Product: {product.get('name')}
 Category: {product.get('category')}
 Price: ₹{product.get('price')}
 Description: {product.get('description')}
 Stock: {product.get('stock')}
-Ratings: {rating_text}
+Ratings: {rating_text}{comment_text}
 """
 
         summary = call_gemini(prompt)
-
         return {"summary": summary}
 
     except HTTPException:

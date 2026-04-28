@@ -2,6 +2,7 @@ import SafeScreen from "@/components/SafeScreen";
 import useCart from "@/hooks/useCart";
 import { useProduct } from "@/hooks/useProduct";
 import { useProductSummary } from "@/hooks/useProductSummary";
+import { useProductReviews } from "@/hooks/useReviews";
 import useWishlist from "@/hooks/useWishlist";
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
@@ -15,15 +16,35 @@ import {
   TouchableOpacity,
   ScrollView,
   Dimensions,
+  Pressable,
+  Modal,
 } from "react-native";
 
 const { width } = Dimensions.get("window");
 
 const ProductDetailScreen = () => {
   const { id } = useLocalSearchParams<{ id: string }>();
+
   const { data: product, isError, isLoading } = useProduct(id);
   const { addToCart, isAddingToCart } = useCart();
-  const { data: summary, isLoading: isSummaryLoading } = useProductSummary(id);
+  const {
+    data: summary,
+    isLoading: isSummaryLoading,
+    refetch,
+  } = useProductSummary(id);
+  const [summaryModalVisible, setSummaryModalVisible] = useState(false);
+  const { data: reviews, isLoading: isReviewsLoading } = useProductReviews(id);
+
+  console.log(id);
+  console.log("Summary:", summary);
+  console.log("Loading:", isSummaryLoading);
+
+  const handleAISummary = async () => {
+    setSummaryModalVisible(true);
+    if (!summary) {
+      await refetch();
+    }
+  };
 
   const {
     isInWishlist,
@@ -143,12 +164,10 @@ const ProductDetailScreen = () => {
               </Text>
             </View>
           </View>
-
           {/* Product Name */}
           <Text className="text-text-primary text-3xl font-bold mb-3">
             {product.name}
           </Text>
-
           {/* Rating & Reviews */}
           <View className="flex-row items-center mb-4">
             <View className="flex-row items-center bg-surface px-3 py-2 rounded-full">
@@ -176,14 +195,12 @@ const ProductDetailScreen = () => {
               </View>
             )}
           </View>
-
           {/* Price */}
           <View className="flex-row items-center mb-6">
             <Text className="text-primary text-4xl font-bold">
               ₹{product.price.toFixed(2)}
             </Text>
           </View>
-
           {/* Quantity */}
           <View className="mb-6">
             <Text className="text-text-primary text-lg font-bold mb-3">
@@ -232,7 +249,6 @@ const ProductDetailScreen = () => {
               </Text>
             )}
           </View>
-
           {/* Description */}
           <View className="mb-8">
             <Text className="text-text-primary text-lg font-bold mb-3">
@@ -242,34 +258,146 @@ const ProductDetailScreen = () => {
               {product.description}
             </Text>
           </View>
+          {/* AI SUMMARY BUTTON — add this inside ScrollView, after Description */}
+          <TouchableOpacity
+            className="flex-row items-center justify-center bg-surface border border-primary/30 rounded-2xl py-4 mb-8"
+            onPress={handleAISummary}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="sparkles" size={20} color="#00D9FF" />
+            <Text className="text-primary font-bold text-base ml-2">
+              AI Summary
+            </Text>
+          </TouchableOpacity>
 
+          {/* REVIEWS SECTION */}
           <View className="mb-8">
-            <View className="flex-row items-center mb-3">
-              <Ionicons name="sparkles" size={18} color="#00D9FF" />
-              <Text className="text-text-primary text-lg font-bold ml-2">
-                AI Summary
-              </Text>
-            </View>
+            <Text className="text-text-primary text-lg font-bold mb-4">
+              Customer Reviews
+            </Text>
 
-            <View className="bg-surface rounded-2xl p-4 border border-primary/20">
-              {isSummaryLoading ? (
-                <View className="flex-row items-center">
-                  <ActivityIndicator size="small" color="#00D9FF" />
-                  <Text className="text-text-secondary ml-3">
-                    Generating AI summary...
-                  </Text>
+            {isReviewsLoading ? (
+              <ActivityIndicator size="small" color="#00D9FF" />
+            ) : reviews && reviews.length > 0 ? (
+              reviews.map((review) => (
+                <View
+                  key={review._id}
+                  className="bg-surface rounded-2xl p-4 mb-3"
+                >
+                  {/* Header */}
+                  <View className="flex-row items-center justify-between mb-2">
+                    <Text className="text-text-primary font-semibold">
+                      {review.user.name}
+                    </Text>
+                    <Text className="text-text-secondary text-xs">
+                      {new Date(review.createdAt).toLocaleDateString("en-IN", {
+                        day: "numeric",
+                        month: "short",
+                        year: "numeric",
+                      })}
+                    </Text>
+                  </View>
+
+                  {/* Stars */}
+                  <View className="flex-row mb-2">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <Ionicons
+                        key={star}
+                        name={star <= review.rating ? "star" : "star-outline"}
+                        size={14}
+                        color="#FFC107"
+                      />
+                    ))}
+                  </View>
+
+                  {/* Comment */}
+                  {review.comment ? (
+                    <Text className="text-text-secondary text-sm leading-5">
+                      {review.comment}
+                    </Text>
+                  ) : (
+                    <Text className="text-text-secondary text-xs italic">
+                      No comment left
+                    </Text>
+                  )}
                 </View>
-              ) : summary ? (
-                <Text className="text-text-secondary text-base leading-6">
-                  {summary}
-                </Text>
-              ) : (
+              ))
+            ) : (
+              <View className="bg-surface rounded-2xl p-4 items-center">
                 <Text className="text-text-secondary text-sm">
-                  No summary available.
+                  No reviews yet. Be the first to review!
                 </Text>
-              )}
-            </View>
+              </View>
+            )}
           </View>
+          {/* AI SUMMARY MODAL */}
+          <Modal
+            visible={summaryModalVisible}
+            transparent
+            animationType="slide"
+            onRequestClose={() => setSummaryModalVisible(false)}
+          >
+            <Pressable
+              className="flex-1 bg-black/60 justify-end"
+              onPress={() => setSummaryModalVisible(false)}
+            >
+              <Pressable onPress={() => {}}>
+                <View className="bg-background rounded-t-3xl p-6 pb-10">
+                  {/* Modal Header */}
+                  <View className="flex-row items-center justify-between mb-6">
+                    <View className="flex-row items-center">
+                      <Ionicons name="sparkles" size={22} color="#00D9FF" />
+                      <Text className="text-text-primary text-xl font-bold ml-2">
+                        AI Product Description
+                      </Text>
+                    </View>
+                    <TouchableOpacity
+                      onPress={() => setSummaryModalVisible(false)}
+                      className="bg-surface w-9 h-9 rounded-full items-center justify-center"
+                    >
+                      <Ionicons name="close" size={20} color="#FFFFFF" />
+                    </TouchableOpacity>
+                  </View>
+
+                  {/* Product name inside modal */}
+                  <Text className="text-text-secondary text-sm mb-4">
+                    {product.name}
+                  </Text>
+
+                  {/* Divider */}
+                  <View className="h-px bg-surface mb-4" />
+
+                  {/* Content */}
+                  {isSummaryLoading ? (
+                    <View className="flex-row items-center py-6">
+                      <ActivityIndicator size="small" color="#00D9FF" />
+                      <Text className="text-text-secondary ml-3">
+                        Generating AI summary...
+                      </Text>
+                    </View>
+                  ) : summary ? (
+                    <Text className="text-text-secondary text-base leading-7">
+                      {summary}
+                    </Text>
+                  ) : (
+                    <View className="items-center py-6">
+                      <Text className="text-text-secondary text-sm">
+                        Failed to generate summary. Try again.
+                      </Text>
+                      <TouchableOpacity
+                        className="mt-4 bg-primary/20 px-6 py-3 rounded-xl"
+                        onPress={() => refetch()}
+                      >
+                        <Text className="text-primary font-semibold">
+                          Retry
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+                  )}
+                </View>
+              </Pressable>
+            </Pressable>
+          </Modal>
         </View>
       </ScrollView>
 

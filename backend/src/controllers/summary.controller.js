@@ -15,7 +15,11 @@ export async function getProductSummary(req, res) {
         // console.log("SUmmary:" + response.data.summary);
         console.log("ML_SERVICE_URL:", ENV.ML_SERVICE_URL);
         console.log("Response from ML:", response.data);
-        res.json({ summary: response.data.summary });
+        console.log("Response from ML:", response.data);
+        res.json({
+            summary: response.data.summary || response.data.error ||
+                "No summary available",
+        });
     } catch (error) {
         console.error("Summary error:", error.message);
         console.error("Full error:", error?.response?.data);

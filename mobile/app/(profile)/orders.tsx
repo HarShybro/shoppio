@@ -23,27 +23,36 @@ function OrdersScreen() {
 
   const [showRatingModal, setShowRatingModal] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+
   const [productRatings, setProductRatings] = useState<{
     [key: string]: number;
   }>({});
 
+  // add productComments state alongside productRatings:
+  const [productComments, setProductComments] = useState<{
+    [key: string]: string;
+  }>({});
+
+  // update handleOpenRating to also init comments:
   const handleOpenRating = (order: Order) => {
     setShowRatingModal(true);
     setSelectedOrder(order);
 
-    // init ratings for all product to 0 - resettin the state for each product
     const initialRatings: { [key: string]: number } = {};
+    const initialComments: { [key: string]: string } = {}; // ← add
     order.orderItems.forEach((item) => {
       const productId = item.product._id;
       initialRatings[productId] = 0;
+      initialComments[productId] = ""; // ← add
     });
     setProductRatings(initialRatings);
+    setProductComments(initialComments); // ← add
   };
 
+  // update handleSubmitRating to pass comment:
   const handleSubmitRating = async () => {
     if (!selectedOrder) return;
 
-    // check if all products have been rated
     const allRated = Object.values(productRatings).every(
       (rating) => rating > 0,
     );
@@ -54,19 +63,21 @@ function OrdersScreen() {
 
     try {
       await Promise.all(
-        selectedOrder.orderItems.map((item) => {
+        selectedOrder.orderItems.map((item) =>
           createReviewAsync({
             productId: item.product._id,
             orderId: selectedOrder._id,
             rating: productRatings[item.product._id],
-          });
-        }),
+            comment: productComments[item.product._id] || "", // ← add
+          }),
+        ),
       );
 
       Alert.alert("Success", "Thank you for rating all products!");
       setShowRatingModal(false);
       setSelectedOrder(null);
       setProductRatings({});
+      setProductComments({}); // ← add
     } catch (error: any) {
       Alert.alert(
         "Error",
@@ -209,11 +220,16 @@ function OrdersScreen() {
         onClose={() => setShowRatingModal(false)}
         order={selectedOrder}
         productRatings={productRatings}
+        productComments={productComments}
         onSubmit={handleSubmitRating}
         isSubmitting={isCreatingReview}
         onRatingChange={(productId, rating) =>
           setProductRatings((prev) => ({ ...prev, [productId]: rating }))
         }
+        onCommentChange={(
+          productId,
+          comment, // ← add
+        ) => setProductComments((prev) => ({ ...prev, [productId]: comment }))}
       />
     </SafeScreen>
   );
