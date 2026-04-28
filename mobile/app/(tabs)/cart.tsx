@@ -86,7 +86,7 @@ const CartScreen = () => {
   };
 
   const handleProceedWithPayment = async (selectedAddress: Address) => {
-    console.log("1. handleProceedWithPayment called", selectedAddress); // ← add this
+    console.log("1. handleProceedWithPayment called", selectedAddress);
     setAddressModalVisible(false);
 
     // log chechkout initiated
@@ -98,7 +98,7 @@ const CartScreen = () => {
 
     try {
       setPaymentLoading(true);
-      console.log("2. Calling API..."); // ← add this
+      console.log("2. Calling API...");
 
       // create payment intent with cart items and shipping address
       const { data } = await api.post("/payment/create-intent", {
@@ -113,7 +113,7 @@ const CartScreen = () => {
         },
       });
 
-      console.log("3. API response:", JSON.stringify(data)); // ← add this
+      console.log("3. API response:", JSON.stringify(data));
 
       if (!data.clientSecret) {
         Alert.alert("Error", "No client secret returned from server");

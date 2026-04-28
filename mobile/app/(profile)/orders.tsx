@@ -77,7 +77,7 @@ function OrdersScreen() {
       setShowRatingModal(false);
       setSelectedOrder(null);
       setProductRatings({});
-      setProductComments({}); // ← add
+      setProductComments({});
     } catch (error: any) {
       Alert.alert(
         "Error",
@@ -226,10 +226,9 @@ function OrdersScreen() {
         onRatingChange={(productId, rating) =>
           setProductRatings((prev) => ({ ...prev, [productId]: rating }))
         }
-        onCommentChange={(
-          productId,
-          comment, // ← add
-        ) => setProductComments((prev) => ({ ...prev, [productId]: comment }))}
+        onCommentChange={(productId, comment) =>
+          setProductComments((prev) => ({ ...prev, [productId]: comment }))
+        }
       />
     </SafeScreen>
   );

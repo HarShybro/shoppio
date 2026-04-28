@@ -99,7 +99,7 @@ export default function WishlistScreen() {
                 key={item._id}
                 className="bg-surface rounded-3xl overflow-hidden mb-3"
                 activeOpacity={0.8}
-                // onPress={() => router.push(`/product/${item._id}`)}
+                onPress={() => router.push(`/product/${item._id}`)}
               >
                 <View className="flex-row p-4">
                   <Image

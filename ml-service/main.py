@@ -153,7 +153,7 @@ def get_models():
     return [m.name for m in models]
 
 
-# ✅ SENTIMENT ROUTE — called by Node.js after review is saved
+# SENTIMENT ROUTE — called by Node.js after review is saved
 @app.post("/sentiment")
 def analyze_review_sentiment(request: SentimentRequest):
     try:
@@ -176,7 +176,7 @@ def analyze_review_sentiment(request: SentimentRequest):
         return {"error": str(e)}
 
 
-# ✅ SUMMARY ROUTE — includes sentiment summary in prompt
+# SUMMARY ROUTE — includes sentiment summary in prompt
 @app.post("/summary")
 def product_summary(request: SummaryRequest):
     try:

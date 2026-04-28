@@ -5,7 +5,7 @@ interface CreateReviewData {
   productId: string;
   orderId: string;
   rating: number;
-  comment?: string; // ← add
+  comment?: string;
 }
 
 interface ReviewUser {
@@ -18,7 +18,6 @@ export interface ProductReview {
   rating: number;
   comment: string;
   sentiment: {
-    // ← add
     label: "positive" | "neutral" | "negative" | "none";
     score: number;
   };
@@ -47,7 +46,6 @@ export const useReviews = () => {
   };
 };
 
-// ← NEW hook for product page
 export const useProductReviews = (productId: string) => {
   const api = useApi();
 

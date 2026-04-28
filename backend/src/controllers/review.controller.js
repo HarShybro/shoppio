@@ -91,7 +91,7 @@ export async function getProductReviews(req, res) {
             _id: r._id,
             rating: r.rating,
             comment: r.comment,
-            sentiment: r.sentiment,   // ← include sentiment
+            sentiment: r.sentiment,
             createdAt: r.createdAt,
             user: {
                 name: userMap[r.userId.toString()]?.name || "User",

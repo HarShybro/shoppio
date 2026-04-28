@@ -12,10 +12,10 @@ export async function getProductSummary(req, res) {
         const response = await axios.post(`${ENV.ML_SERVICE_URL}/summary`, {
             product_id: productId,
         });
-        // console.log("SUmmary:" + response.data.summary);
+
         console.log("ML_SERVICE_URL:", ENV.ML_SERVICE_URL);
         console.log("Response from ML:", response.data);
-        console.log("Response from ML:", response.data);
+
         res.json({
             summary: response.data.summary || response.data.error ||
                 "No summary available",
@@ -25,7 +25,7 @@ export async function getProductSummary(req, res) {
         console.error("Full error:", error?.response?.data);
         res.status(500).json({
             error: "Failed to get product summary",
-            details: error.message  // ← add this
+            details: error.message
         });
     }
 }

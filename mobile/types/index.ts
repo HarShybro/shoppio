@@ -75,7 +75,7 @@ export interface Review {
   userId: string | User;
   orderId: string;
   rating: number;
-  comment: string; // ← add
+  comment: string;
   createdAt: string;
   updatedAt: string;
 }
